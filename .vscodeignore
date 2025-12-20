@@ -1,0 +1,21 @@
+# Source files (bundled into dist)
+src/**
+scripts/**
+
+# Config files
+.vscode/**
+.gitignore
+.prettierrc
+.prettierignore
+eslint.config.js
+tsconfig.json
+rslib.config.ts
+
+# Development files
+*.map
+*.vsix
+node_modules/**
+pnpm-lock.yaml
+
+# Include documentation
+!README.md
