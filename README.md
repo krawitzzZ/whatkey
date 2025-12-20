@@ -208,8 +208,8 @@ pnpm generate:schema
 
 JSON schemas are available for validating your configuration:
 
-- [binding-item.schema.json](schemas/binding-item.schema.json) - Schema for individual binding items
-- [whatkey-config.schema.json](schemas/whatkey-config.schema.json) - Schema for the full WhatKey configuration
+- [binding-item.schema.json](https://github.com/krawitzzZ/whatkey/blob/main/schemas/binding-item.schema.json) - Schema for individual binding items
+- [whatkey-config.schema.json](https://github.com/krawitzzZ/whatkey/blob/main/schemas/whatkey-config.schema.json) - Schema for the full WhatKey configuration
 
 You can reference these schemas in your `settings.json` for autocompletion and validation, or use them programmatically.
 
