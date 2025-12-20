@@ -1,6 +1,7 @@
 # Source files (bundled into dist)
 src/**
 scripts/**
+schemas/**
 
 # Config files
 .vscode/**
