@@ -12,6 +12,24 @@ Similar to [WhichKey](https://vspacecode.github.io/docs/whichkey) but with enhan
 - **Nested Menus**: Organize commands into logical groups with submenus
 - **Icons Support**: Display VS Code icons next to menu items
 
+## Media
+
+### Default View
+
+![Default View](https://github.com/krawitzzZ/whatkey/raw/main/resources/default.png)
+
+### Without Details
+
+![Without Details](https://github.com/krawitzzZ/whatkey/raw/main/resources/no-detail.png)
+
+### Without Icons
+
+![Without Icons](https://github.com/krawitzzZ/whatkey/raw/main/resources/no-icons.png)
+
+### Usage Demo
+
+![Usage Demo](https://github.com/krawitzzZ/whatkey/raw/main/resources/video.gif)
+
 ## Usage
 
 ### Commands
