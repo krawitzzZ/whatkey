@@ -19,37 +19,6 @@ export const DEFAULT_KEY_SEQUENCE_TIMEOUT_MS = 350; // milliseconds
  * Default bindings for demonstration
  */
 export const DEFAULT_BINDINGS: BindingItem[] = [
-  // TODO(nikita.demin): remove l example
-  {
-    key: "l",
-    name: "Nested Example",
-    icon: "folder",
-    type: "submenu",
-    items: [
-      {
-        key: "s",
-        name: "Save",
-        icon: "save",
-        type: "command",
-        command: "workbench.action.files.save",
-      },
-      {
-        key: "L",
-        name: "Nested Level 2",
-        icon: "folder",
-        type: "submenu",
-        items: [
-          {
-            key: "a",
-            name: "Nested Level 3",
-            icon: "save-all",
-            type: "command",
-            command: "workbench.action.files.save",
-          },
-        ],
-      },
-    ],
-  },
   {
     key: "b",
     name: "Buffer/Editor",
