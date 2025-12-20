@@ -2,7 +2,7 @@ import type { BindingItem, BindingItemWithPath } from "../config";
 
 export const getLabel = (
   binding: BindingItem | BindingItemWithPath,
-    showIcons: boolean ,
+  showIcons: boolean,
 ): string => {
   const icon = getIcon(binding, showIcons);
   return `${icon}${("path" in binding ? binding.path : binding.key).padEnd(2, " ")}`;

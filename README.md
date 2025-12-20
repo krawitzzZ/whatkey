@@ -204,6 +204,15 @@ pnpm generate:schema
 2. Press `F5` to launch the Extension Development Host
 3. The extension will be active in the new window
 
+## JSON Schemas
+
+JSON schemas are available for validating your configuration:
+
+- [binding-item.schema.json](schemas/binding-item.schema.json) - Schema for individual binding items
+- [whatkey-config.schema.json](schemas/whatkey-config.schema.json) - Schema for the full WhatKey configuration
+
+You can reference these schemas in your `settings.json` for autocompletion and validation, or use them programmatically.
+
 ## License
 
 MIT

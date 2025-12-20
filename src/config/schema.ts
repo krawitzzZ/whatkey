@@ -75,14 +75,14 @@ export const BindingItemSchema: z.ZodType<
     .superRefine((data, ctx) => {
       if (data.type === "command" && !("command" in data)) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "Binding with type 'command' requires a 'command' property",
           path: ["command"],
         });
       }
       if (data.type === "commands" && !("commands" in data)) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message:
             "Binding with type 'commands' requires a 'commands' array property",
           path: ["commands"],
@@ -90,7 +90,7 @@ export const BindingItemSchema: z.ZodType<
       }
       if (data.type === "submenu" && !("items" in data)) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message:
             "Binding with type 'submenu' requires an 'items' array property",
           path: ["items"],
@@ -174,6 +174,6 @@ export function parseConfig(config: unknown): WhatKeyConfig {
  */
 export function validateConfig(
   config: unknown,
-): z.SafeParseReturnType<unknown, WhatKeyConfig> {
+): z.ZodSafeParseResult<WhatKeyConfig> {
   return WhatKeyConfigSchema.safeParse(config);
 }

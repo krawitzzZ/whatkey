@@ -1,0 +1,214 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "bindings": {
+      "description": "Root level command bindings for the WhatKey menu",
+      "default": [],
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/__schema0"
+      }
+    },
+    "bindingsMergeStrategy": {
+      "description": "Strategy for combining default bindings with user-defined bindings",
+      "default": "merge",
+      "type": "string",
+      "enum": [
+        "merge",
+        "replace"
+      ]
+    },
+    "sortOrder": {
+      "description": "Sort order for menu items",
+      "default": "custom",
+      "type": "string",
+      "enum": [
+        "alphabetical",
+        "custom"
+      ]
+    },
+    "showIcons": {
+      "description": "Whether to show icons in the command menu",
+      "default": true,
+      "type": "boolean"
+    },
+    "showDetail": {
+      "description": "Whether to show detail in the command menu (e.g., command IDs, number of commands)",
+      "default": true,
+      "type": "boolean"
+    },
+    "keySequenceTimeout": {
+      "description": "Timeout in milliseconds for multi-character key sequences. When typing keys quickly within this window, they are combined to match multi-char bindings (e.g., \"ca\" to close all). Set to 0 to disable multi-char support.",
+      "default": 500,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5000
+    }
+  },
+  "required": [
+    "bindings",
+    "bindingsMergeStrategy",
+    "sortOrder",
+    "showIcons",
+    "showDetail",
+    "keySequenceTimeout"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "__schema0": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "key": {
+              "description": "The key to trigger this binding",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2
+            },
+            "name": {
+              "description": "Display name for this binding",
+              "type": "string",
+              "minLength": 1
+            },
+            "detail": {
+              "description": "Additional detail information for this binding that will be shown in the menu if enabled. By default, \"command\" bindings show the command ID, \"commands\" bindings show the number of commands and the \"submenu\" type the number of nested bindings.",
+              "type": "string"
+            },
+            "icon": {
+              "description": "VS Code icon identifier (e.g., \"file\", \"code\"). See https://code.visualstudio.com/api/references/icons-in-labels",
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "const": "command"
+            },
+            "command": {
+              "description": "VS Code command identifier to execute",
+              "type": "string",
+              "minLength": 1
+            },
+            "args": {
+              "description": "Arguments to pass to the command"
+            }
+          },
+          "required": [
+            "key",
+            "name",
+            "type",
+            "command"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "key": {
+              "description": "The key to trigger this binding",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2
+            },
+            "name": {
+              "description": "Display name for this binding",
+              "type": "string",
+              "minLength": 1
+            },
+            "detail": {
+              "description": "Additional detail information for this binding that will be shown in the menu if enabled. By default, \"command\" bindings show the command ID, \"commands\" bindings show the number of commands and the \"submenu\" type the number of nested bindings.",
+              "type": "string"
+            },
+            "icon": {
+              "description": "VS Code icon identifier (e.g., \"file\", \"code\"). See https://code.visualstudio.com/api/references/icons-in-labels",
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "const": "commands"
+            },
+            "commands": {
+              "description": "Array of VS Code commands to execute in sequence",
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "command": {
+                        "description": "VS Code command identifier to execute",
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "args": {
+                        "description": "Arguments to pass to the command"
+                      }
+                    },
+                    "required": [
+                      "command"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "key",
+            "name",
+            "type",
+            "commands"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "key": {
+              "description": "The key to trigger this binding",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2
+            },
+            "name": {
+              "description": "Display name for this binding",
+              "type": "string",
+              "minLength": 1
+            },
+            "detail": {
+              "description": "Additional detail information for this binding that will be shown in the menu if enabled. By default, \"command\" bindings show the command ID, \"commands\" bindings show the number of commands and the \"submenu\" type the number of nested bindings.",
+              "type": "string"
+            },
+            "icon": {
+              "description": "VS Code icon identifier (e.g., \"file\", \"code\"). See https://code.visualstudio.com/api/references/icons-in-labels",
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "const": "submenu"
+            },
+            "items": {
+              "description": "Nested bindings for submenu",
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/__schema0"
+              }
+            }
+          },
+          "required": [
+            "key",
+            "name",
+            "type",
+            "items"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { z } from "zod";
 import {
   type BindingItem,
   type WhatKeyConfig,
@@ -27,7 +28,7 @@ export const loadConfig = (): WhatKeyConfig => {
   const result = validateConfig(rawConfig);
 
   if (!result.success) {
-    const errorMessages = result.error.errors
+    const errorMessages = result.error.issues
       .map(e => formatValidationError(e))
       .join("\n");
     vscode.window.showErrorMessage(
@@ -53,13 +54,9 @@ export const loadConfig = (): WhatKeyConfig => {
 /**
  * Formats a Zod validation error into a user-friendly message
  */
-const formatValidationError = (error: {
-  path: (string | number)[];
-  message: string;
-  code: string;
-}): string => {
+const formatValidationError = (error: z.core.$ZodIssue): string => {
   const path = error.path
-    .map(p => (typeof p === "number" ? `[${String(p)}]` : `.${p}`))
+    .map(p => (typeof p === "number" ? `[${String(p)}]` : `.${String(p)}`))
     .join("")
     .replace(/^\./, "");
 
@@ -67,7 +64,8 @@ const formatValidationError = (error: {
     .replace(/bindings(\[\d+\])/g, "bindings$1")
     .replace(/items(\[\d+\])/g, "items$1");
 
-  if (error.code === "invalid_union_discriminator") {
+  // Handle discriminated union errors (type field mismatch)
+  if (error.code === "invalid_union") {
     return `${readablePath}: Invalid type. Must be "command", "commands", or "submenu"`;
   }
 
