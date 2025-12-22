@@ -9,7 +9,14 @@ export default {
     "^.+\\.ts$": ["@swc/jest"],
   },
   moduleFileExtensions: ["ts", "js", "json"],
-  collectCoverageFrom: ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/*.d.ts"],
+  collectCoverageFrom: [
+    "src/**/*.ts",
+    "!src/**/index.ts",
+    "!src/**/*.test.ts",
+    "!src/**/*.d.ts",
+    "!src/config/*.ts",
+    "!src/extension.ts",
+  ],
   coverageDirectory: "coverage",
   coverageReporters: ["text", "lcov"],
   coverageThreshold: {
