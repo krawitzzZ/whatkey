@@ -35,8 +35,9 @@ jobs:
 
       - name: Run tests
         run: |
-          pnpm run test:coverage 2>&1 | tee coverage-output.txt
+          pnpm run test:coverage 2>&1 | tee coverage-output.txt || TEST_EXIT_CODE=$?
           echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           grep -A 100 "^-----------" coverage-output.txt | head -n 50 >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+          exit ${TEST_EXIT_CODE:-0}
