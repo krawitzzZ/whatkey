@@ -13,6 +13,9 @@ eslint.config.js
 tsconfig.json
 rslib.config.ts
 
+# Test output
+coverage/
+
 # Development files
 *.map
 *.vsix
