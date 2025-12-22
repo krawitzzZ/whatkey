@@ -16,20 +16,7 @@ describe("flattenBindings", () => {
     const result = flattenBindings(bindings);
 
     expect(result).toHaveLength(2);
-    expect(result[0]).toEqual({
-      key: "a",
-      name: "Command A",
-      type: "command",
-      command: "cmd.a",
-      path: "a",
-    });
-    expect(result[1]).toEqual({
-      key: "b",
-      name: "Command B",
-      type: "command",
-      command: "cmd.b",
-      path: "b",
-    });
+    expect(result).toStrictEqual(bindings.map(b => ({ ...b, path: b.key })));
   });
 
   it("should flatten nested submenus with correct paths", () => {
@@ -59,6 +46,7 @@ describe("flattenBindings", () => {
         name: "Level 1",
         type: "submenu",
         items: [
+          { key: "d", name: "Level 2", type: "command", command: "cmd.d" },
           {
             key: "b",
             name: "Level 2",
@@ -73,8 +61,9 @@ describe("flattenBindings", () => {
 
     const result = flattenBindings(bindings);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]?.path).toBe("abc");
+    expect(result).toHaveLength(2);
+    expect(result[0]?.path).toBe("ad");
+    expect(result[1]?.path).toBe("abc");
   });
 });
 
@@ -87,6 +76,7 @@ describe("mergeBindings", () => {
     const result = mergeBindings(defaults, []);
 
     expect(result).toEqual(defaults);
+    expect(result).not.toBe(defaults);
   });
 
   it("should add new user bindings to defaults", () => {
@@ -142,11 +132,11 @@ describe("mergeBindings", () => {
 
     const result = mergeBindings(defaults, userBindings);
 
+    if (result[0]?.type !== "submenu") throw new Error("Expected submenu type");
+
     expect(result).toHaveLength(1);
-    expect(result[0]?.type).toBe("submenu");
-    if (result[0]?.type === "submenu") {
-      expect(result[0].items).toHaveLength(2);
-    }
+    expect(result[0].type).toBe("submenu");
+    expect(result[0].items).toHaveLength(2);
   });
 });
 
@@ -170,6 +160,8 @@ describe("deduplicateBindings", () => {
     expect(result.deduplicated[0]?.name).toBe("First A");
     expect(result.duplicates).toHaveLength(1);
     expect(result.duplicates[0]?.key).toBe("a");
+    expect(result.duplicates[0]?.path).toBe("a");
+    expect(result.duplicates[0]?.name).toBe("Second A");
   });
 
   it("should detect duplicates in nested submenus", () => {
@@ -188,7 +180,8 @@ describe("deduplicateBindings", () => {
     const result = deduplicateBindings(bindings);
 
     expect(result.duplicates).toHaveLength(1);
-    expect(result.duplicates[0]?.path).toContain("f");
+    expect(result.duplicates[0]?.name).toBe("Save 2");
+    expect(result.duplicates[0]?.path).toBe("f → s");
   });
 });
 
@@ -196,12 +189,7 @@ describe("sortBindings", () => {
   it("should always put submenus first", () => {
     const bindings: BindingItem[] = [
       { key: "z", name: "Command Z", type: "command", command: "cmd.z" },
-      {
-        key: "a",
-        name: "Submenu A",
-        type: "submenu",
-        items: [],
-      },
+      { key: "a", name: "Submenu A", type: "submenu", items: [] },
     ];
 
     const result = sortBindings(bindings, "custom");
@@ -210,7 +198,23 @@ describe("sortBindings", () => {
     expect(result[1]?.type).toBe("command");
   });
 
-  it("should sort alphabetically when specified", () => {
+  it("should keep the sorting as is when custom sorting is specified", () => {
+    const bindings: BindingItem[] = [
+      { key: "c", name: "Command C", type: "command", command: "cmd.c" },
+      { key: "f", name: "Submenu F", type: "submenu", items: [] },
+      { key: "a", name: "Command A", type: "command", command: "cmd.a" },
+      { key: "b", name: "Command B", type: "command", command: "cmd.b" },
+    ];
+
+    const result = sortBindings(bindings, "custom");
+
+    expect(result[0]?.key).toBe("f");
+    expect(result[1]?.key).toBe("c");
+    expect(result[2]?.key).toBe("a");
+    expect(result[3]?.key).toBe("b");
+  });
+
+  it("should sort alphabetically by key when specified", () => {
     const bindings: BindingItem[] = [
       { key: "c", name: "Command C", type: "command", command: "cmd.c" },
       { key: "a", name: "Command A", type: "command", command: "cmd.a" },

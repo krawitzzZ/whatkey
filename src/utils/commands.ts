@@ -1,12 +1,18 @@
 import * as vscode from "vscode";
-import type { BindingItem, CommandBinding, CommandsBinding } from "../config";
+import type { BindingItem } from "../config";
 
+/**
+ * Executes a binding (command or commands) and handles errors
+ */
 export const executeBinding = async (binding: BindingItem): Promise<void> => {
   try {
-    if (binding.type === "command") {
-      await executeCommand(binding);
-    } else if (binding.type === "commands") {
-      await executeCommands(binding);
+    switch (binding.type) {
+      case "command":
+        await executeCommand(binding);
+        break;
+      case "commands":
+        await executeCommands(binding.commands);
+        break;
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -16,29 +22,27 @@ export const executeBinding = async (binding: BindingItem): Promise<void> => {
   }
 };
 
-export const executeCommand = async (
-  binding: CommandBinding,
-): Promise<void> => {
-  if (binding.args !== undefined) {
-    await vscode.commands.executeCommand(binding.command, binding.args);
-  } else {
-    await vscode.commands.executeCommand(binding.command);
+const executeCommand = async (input: CommandInput): Promise<void> => {
+  const args =
+    typeof input !== "string" && "args" in input ? input.args : empty;
+  const cmd = typeof input === "string" ? input : input.command;
+  const cmdArgs = args === empty ? [] : [args];
+
+  await vscode.commands.executeCommand(cmd, ...cmdArgs);
+};
+
+const executeCommands = async (inputs: CommandInput[]): Promise<void> => {
+  for (const cmd of inputs) {
+    await executeCommand(cmd);
   }
 };
 
-export const executeCommands = async (
-  binding: CommandsBinding,
-): Promise<void> => {
-  for (const cmd of binding.commands) {
-    if (typeof cmd === "string") {
-      await vscode.commands.executeCommand(cmd);
-      continue;
-    }
+/**
+ * A unique symbol to represent absence of arguments
+ */
+const empty = Symbol("empty");
 
-    if (cmd.args !== undefined) {
-      await vscode.commands.executeCommand(cmd.command, cmd.args);
-    } else {
-      await vscode.commands.executeCommand(cmd.command);
-    }
-  }
-};
+/**
+ * Type representing a command input, which can be a string or an object with command and optional args
+ */
+type CommandInput = string | { command: string; args?: unknown };

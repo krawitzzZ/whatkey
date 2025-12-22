@@ -73,25 +73,24 @@ export const deduplicateBindings = (
   currentPath = "",
 ): {
   deduplicated: BindingItem[];
-  duplicates: { key: string; path: string }[];
+  duplicates: BindingItemWithPath[];
 } => {
   const seen = new Set<string>();
   const deduplicated: BindingItem[] = [];
-  const duplicates: { key: string; path: string }[] = [];
+  const duplicates: BindingItemWithPath[] = [];
 
   for (const binding of bindings) {
+    const path = `${currentPath}${binding.key}`;
+
     if (seen.has(binding.key)) {
-      duplicates.push({ key: binding.key, path: currentPath });
+      duplicates.push({ ...binding, path });
       continue;
     }
 
     seen.add(binding.key);
 
     if (binding.type === "submenu") {
-      const nested = deduplicateBindings(
-        binding.items,
-        `${currentPath}${binding.key} → `,
-      );
+      const nested = deduplicateBindings(binding.items, `${path} → `);
       duplicates.push(...nested.duplicates);
       deduplicated.push({ ...binding, items: nested.deduplicated });
     } else {

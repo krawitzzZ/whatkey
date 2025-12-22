@@ -10,6 +10,9 @@ import {
 } from "../config";
 import { deduplicateBindings } from "./bindings";
 
+/**
+ * Loads and validates the extension configuration from VS Code settings
+ */
 export const loadConfig = (): WhatKeyConfig => {
   const vsConfig = vscode.workspace.getConfiguration(EXTENSION_ID);
 
