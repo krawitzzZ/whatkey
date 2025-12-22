@@ -9,7 +9,7 @@ import {
   sortBindings,
 } from "../utils";
 
-interface MenuQuickPickItem extends vscode.QuickPickItem {
+export interface MenuQuickPickItem extends vscode.QuickPickItem {
   binding: BindingItem;
 }
 

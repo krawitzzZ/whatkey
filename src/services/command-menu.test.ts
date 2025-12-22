@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+
 import * as vscode from "vscode";
-import { CommandMenu } from "./command-menu";
+import { CommandMenu, MenuQuickPickItem } from "./command-menu";
 import type { ConfigurationManager } from "./configuration-manager";
 import type { BindingItem } from "../config";
+import { createMock, DeepMocked } from "@golevelup/ts-jest";
 
 // Use a variable that can be accessed from both module and tests
 let mockExecuteBindingFn = jest.fn(
@@ -38,22 +41,27 @@ const mockExecuteBinding = {
   },
 };
 
-interface MockQuickPickHandlers {
-  hide: (() => void)[];
-  accept: (() => void)[];
-  changeValue: ((value: string) => void)[];
+interface QuickPickHelpers {
+  triggerHide: () => void;
+  triggerAccept: () => void;
+  triggerChangeValue: (value: string) => void;
 }
 
 // Create a mock QuickPick
-const createMockQuickPick = () => {
-  const handlers: MockQuickPickHandlers = {
-    hide: [],
-    accept: [],
-    changeValue: [],
+const createMockQuickPick = (): DeepMocked<
+  vscode.QuickPick<MenuQuickPickItem>
+> &
+  QuickPickHelpers => {
+  const handlers = {
+    hide: [] as QuickPickHelpers["triggerHide"][],
+    accept: [] as QuickPickHelpers["triggerAccept"][],
+    changeValue: [] as QuickPickHelpers["triggerChangeValue"][],
   };
-  return {
-    items: [] as vscode.QuickPickItem[],
-    selectedItems: [] as vscode.QuickPickItem[],
+  const mock: DeepMocked<vscode.QuickPick<MenuQuickPickItem>> = createMock<
+    vscode.QuickPick<MenuQuickPickItem>
+  >({
+    items: [],
+    selectedItems: [],
     value: "",
     placeholder: "",
     matchOnDetail: false,
@@ -73,7 +81,9 @@ const createMockQuickPick = () => {
       handlers.changeValue.push(handler);
       return { dispose: jest.fn() };
     }),
-    // Helper methods for testing
+  });
+
+  const helpers: QuickPickHelpers = {
     triggerHide: () => {
       handlers.hide.forEach(h => {
         h();
@@ -90,6 +100,8 @@ const createMockQuickPick = () => {
       });
     },
   };
+
+  return { ...mock, ...helpers };
 };
 
 jest.mock("vscode", () => ({
@@ -101,82 +113,67 @@ jest.mock("vscode", () => ({
 
 const mockedVscode = jest.mocked(vscode);
 
-interface MockConfigManager {
-  bindings: BindingItem[];
-  flatBindings: {
-    key: string;
-    name: string;
-    type: string;
-    command?: string;
-    path: string;
-  }[];
-  sortOrder: "custom" | "alphabetical";
-  showIcons: boolean;
-  showDetail: boolean;
-  keySequenceTimeout: number;
-  dispose: jest.Mock;
-}
-
 const createMockConfigManager = (
-  overrides: Partial<MockConfigManager> = {},
-): MockConfigManager => ({
-  bindings: [
-    {
-      key: "f",
-      name: "Format",
-      type: "command",
-      command: "editor.action.formatDocument",
-    },
-    {
-      key: "s",
-      name: "Save",
-      type: "command",
-      command: "workbench.action.files.save",
-    },
-    {
-      key: "b",
-      name: "Buffer",
-      type: "submenu",
-      items: [
-        {
-          key: "c",
-          name: "Close",
-          type: "command",
-          command: "workbench.action.closeActiveEditor",
-        },
-      ],
-    },
-  ] as BindingItem[],
-  flatBindings: [
-    {
-      key: "f",
-      name: "Format",
-      type: "command",
-      command: "editor.action.formatDocument",
-      path: "f",
-    },
-    {
-      key: "s",
-      name: "Save",
-      type: "command",
-      command: "workbench.action.files.save",
-      path: "s",
-    },
-    {
-      key: "c",
-      name: "Close",
-      type: "command",
-      command: "workbench.action.closeActiveEditor",
-      path: "bc",
-    },
-  ],
-  sortOrder: "custom",
-  showIcons: true,
-  showDetail: true,
-  keySequenceTimeout: 350,
-  dispose: jest.fn(),
-  ...overrides,
-});
+  overrides: Partial<ConfigurationManager> = {},
+): DeepMocked<ConfigurationManager> =>
+  createMock<ConfigurationManager>({
+    bindings: [
+      {
+        key: "f",
+        name: "Format",
+        type: "command",
+        command: "editor.action.formatDocument",
+      },
+      {
+        key: "s",
+        name: "Save",
+        type: "command",
+        command: "workbench.action.files.save",
+      },
+      {
+        key: "b",
+        name: "Buffer",
+        type: "submenu",
+        items: [
+          {
+            key: "c",
+            name: "Close",
+            type: "command",
+            command: "workbench.action.closeActiveEditor",
+          },
+        ],
+      },
+    ],
+    flatBindings: [
+      {
+        key: "f",
+        name: "Format",
+        type: "command",
+        command: "editor.action.formatDocument",
+        path: "f",
+      },
+      {
+        key: "s",
+        name: "Save",
+        type: "command",
+        command: "workbench.action.files.save",
+        path: "s",
+      },
+      {
+        key: "c",
+        name: "Close",
+        type: "command",
+        command: "workbench.action.closeActiveEditor",
+        path: "bc",
+      },
+    ],
+    sortOrder: "custom",
+    showIcons: true,
+    showDetail: true,
+    keySequenceTimeout: 350,
+    dispose: jest.fn(),
+    ...overrides,
+  });
 
 describe("CommandMenu", () => {
   let mockQuickPick: ReturnType<typeof createMockQuickPick>;
@@ -185,17 +182,13 @@ describe("CommandMenu", () => {
     jest.clearAllMocks();
     mockExecuteBinding.reset();
     mockQuickPick = createMockQuickPick();
-    mockedVscode.window.createQuickPick.mockReturnValue(
-      mockQuickPick as unknown as vscode.QuickPick<vscode.QuickPickItem>,
-    );
+    mockedVscode.window.createQuickPick.mockReturnValue(mockQuickPick);
   });
 
   describe("show", () => {
     it("should create and show a QuickPick", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
 
@@ -205,9 +198,7 @@ describe("CommandMenu", () => {
 
     it("should populate items from bindings", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
 
@@ -216,9 +207,7 @@ describe("CommandMenu", () => {
 
     it("should set placeholder without key path initially", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
 
@@ -229,9 +218,7 @@ describe("CommandMenu", () => {
   describe("showSearch", () => {
     it("should create and show a search QuickPick", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.showSearch();
 
@@ -242,9 +229,7 @@ describe("CommandMenu", () => {
 
     it("should enable matching on detail and description", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.showSearch();
 
@@ -254,9 +239,7 @@ describe("CommandMenu", () => {
 
     it("should execute binding when item is accepted", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.showSearch();
 
@@ -275,9 +258,7 @@ describe("CommandMenu", () => {
 
     it("should dispose QuickPick on hide", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.showSearch();
       mockQuickPick.triggerHide();
@@ -299,9 +280,7 @@ describe("CommandMenu", () => {
         ] as BindingItem[],
         keySequenceTimeout: 350,
       });
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
       mockQuickPick.triggerChangeValue("f");
@@ -312,9 +291,7 @@ describe("CommandMenu", () => {
 
     it("should show status bar message for invalid key", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
       mockQuickPick.triggerChangeValue("z");
@@ -334,9 +311,7 @@ describe("CommandMenu", () => {
         ] as BindingItem[],
         keySequenceTimeout: 0,
       });
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
       mockQuickPick.triggerChangeValue("f");
@@ -364,9 +339,7 @@ describe("CommandMenu", () => {
       const configManager = createMockConfigManager({
         bindings: [submenuBinding],
       });
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
 
@@ -400,9 +373,7 @@ describe("CommandMenu", () => {
       const configManager = createMockConfigManager({
         bindings: [submenuBinding],
       });
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
 
@@ -428,9 +399,7 @@ describe("CommandMenu", () => {
       const configManager = createMockConfigManager({
         bindings: [binding],
       });
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
 
@@ -443,9 +412,7 @@ describe("CommandMenu", () => {
 
     it("should not execute when no item is selected", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
 
@@ -459,9 +426,7 @@ describe("CommandMenu", () => {
   describe("dispose", () => {
     it("should dispose QuickPick and ConfigurationManager", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
       menu.dispose();
@@ -472,9 +437,7 @@ describe("CommandMenu", () => {
 
     it("should handle dispose when QuickPick is not created", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       // Dispose without showing - should not throw
       expect(() => {
@@ -487,9 +450,7 @@ describe("CommandMenu", () => {
   describe("hide handler", () => {
     it("should dispose QuickPick when hidden", () => {
       const configManager = createMockConfigManager();
-      const menu = new CommandMenu(
-        configManager as unknown as ConfigurationManager,
-      );
+      const menu = new CommandMenu(configManager);
 
       menu.show();
       mockQuickPick.triggerHide();
