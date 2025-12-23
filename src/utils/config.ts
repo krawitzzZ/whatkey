@@ -9,6 +9,7 @@ import {
   DEFAULT_KEY_SEQUENCE_TIMEOUT_MS,
 } from "../config";
 import { deduplicateBindings } from "./bindings";
+import { showErrorMessage, showInformationMessage } from "./notify";
 
 /**
  * Loads and validates the extension configuration from VS Code settings
@@ -34,9 +35,7 @@ export const loadConfig = (): WhatKeyConfig => {
     const errorMessages = result.error.issues
       .map(e => formatValidationError(e))
       .join("\n");
-    vscode.window.showErrorMessage(
-      `WhatKey: Invalid configuration\n${errorMessages}`,
-    );
+    showErrorMessage(`Invalid configuration\n${errorMessages}`);
 
     return DEFAULT_CONFIG;
   }
@@ -45,8 +44,8 @@ export const loadConfig = (): WhatKeyConfig => {
     const { duplicates } = deduplicateBindings(result.data.bindings);
     if (duplicates.length > 0) {
       const paths = duplicates.map(d => `'${d.path}${d.key}'`).join(", ");
-      void vscode.window.showInformationMessage(
-        `WhatKey: Duplicate keys found in config: ${paths}. First occurrence will be used.`,
+      showInformationMessage(
+        `Duplicate keys found in config: ${paths}. First occurrence will be used.`,
       );
     }
   }

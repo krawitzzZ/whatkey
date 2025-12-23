@@ -10,6 +10,7 @@ Similar to [WhichKey](https://vspacecode.github.io/docs/whichkey) but with enhan
 - **Search Mode**: Search through all configured commands and execute them directly
 - **Customizable Bindings**: Define your own key bindings and command mappings
 - **Nested Menus**: Organize commands into logical groups with submenus
+- **Shell Commands**: Execute shell commands with configurable output (silent, terminal, output channel, notification)
 - **Icons Support**: Display VS Code icons next to menu items
 
 ## Media
@@ -117,6 +118,35 @@ Executes multiple commands in sequence:
   ]
 }
 ```
+
+#### Shell Binding
+
+Executes a shell command. Supports multiple output modes:
+
+```json
+{
+  "key": "g",
+  "name": "Git Status",
+  "type": "shell",
+  "command": "git",
+  "args": ["status"],
+  "output": "terminal"
+}
+```
+
+**Output modes:**
+
+| Mode           | Description                                                          |
+| -------------- | -------------------------------------------------------------------- |
+| `silent`       | Run in background with no output (default)                           |
+| `channel`      | Show output in the "whatkey" Output panel                            |
+| `notification` | Show result as VS Code notification (truncated to 200 chars)         |
+| `terminal`     | Run in a visible terminal (reuses a shared "WhatKey Shell" terminal) |
+
+**Additional options:**
+
+- `cwd` - Working directory for the command (defaults to workspace root)
+- `args` - Array of arguments to pass to the command
 
 #### Submenu
 

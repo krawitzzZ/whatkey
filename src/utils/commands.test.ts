@@ -2,9 +2,36 @@ import * as vscode from "vscode";
 import type {
   CommandBinding,
   CommandsBinding,
+  ShellBinding,
   SubmenuBinding,
 } from "../config";
 import { executeBinding } from "./commands";
+
+// Create mock for spawn
+const mockSpawn = jest.fn();
+const mockOn = jest.fn();
+const mockUnref = jest.fn();
+const mockStdoutOn = jest.fn();
+const mockStderrOn = jest.fn();
+
+jest.mock("node:child_process", () => ({
+  spawn: (...args: unknown[]) => {
+    mockSpawn(...args);
+    return {
+      on: mockOn,
+      unref: mockUnref,
+      stdout: { on: mockStdoutOn },
+      stderr: { on: mockStderrOn },
+    };
+  },
+}));
+
+const mockCreateTerminal = jest.fn();
+const mockTerminalSendText = jest.fn();
+const mockTerminalShow = jest.fn();
+const mockOutputChannelAppendLine = jest.fn();
+const mockOutputChannelShow = jest.fn();
+const mockCreateOutputChannel = jest.fn();
 
 jest.mock("vscode", () => ({
   commands: {
@@ -12,6 +39,25 @@ jest.mock("vscode", () => ({
   },
   window: {
     showErrorMessage: jest.fn(),
+    showInformationMessage: jest.fn(),
+    terminals: [],
+    createTerminal: (...args: unknown[]) => {
+      mockCreateTerminal(...args);
+      return {
+        sendText: mockTerminalSendText,
+        show: mockTerminalShow,
+      };
+    },
+    createOutputChannel: (...args: unknown[]) => {
+      mockCreateOutputChannel(...args);
+      return {
+        appendLine: mockOutputChannelAppendLine,
+        show: mockOutputChannelShow,
+      };
+    },
+  },
+  workspace: {
+    workspaceFolders: [{ uri: { fsPath: "/workspace" } }],
   },
 }));
 
@@ -77,7 +123,7 @@ describe("executeBinding", () => {
 
     expect(mockedVscode.commands.executeCommand).toHaveBeenCalledTimes(1);
     expect(mockedVscode.window.showErrorMessage).toHaveBeenCalledWith(
-      "WhatKey: Failed to execute command - Command not found",
+      "WhatKey => Failed to execute command: Command not found",
     );
   });
 
@@ -94,7 +140,7 @@ describe("executeBinding", () => {
     await executeBinding(binding);
 
     expect(mockedVscode.window.showErrorMessage).toHaveBeenCalledWith(
-      "WhatKey: Failed to execute command - Unknown error",
+      "WhatKey => Failed to execute command: Unknown error",
     );
   });
 });
@@ -223,6 +269,225 @@ describe("executeBinding => CommandsBinding", () => {
       2,
       "type",
       { text: "saved" },
+    );
+  });
+});
+
+describe("executeBinding => ShellBinding", () => {
+  beforeEach(() => {
+    mockSpawn.mockClear();
+    mockOn.mockClear();
+    mockUnref.mockClear();
+    mockStdoutOn.mockClear();
+    mockStderrOn.mockClear();
+    mockCreateTerminal.mockClear();
+    mockTerminalSendText.mockClear();
+    mockTerminalShow.mockClear();
+    mockOutputChannelAppendLine.mockClear();
+    mockOutputChannelShow.mockClear();
+    mockCreateOutputChannel.mockClear();
+    mockedVscode.window.showInformationMessage =
+      jest.fn() as typeof mockedVscode.window.showInformationMessage;
+    mockedVscode.window.showErrorMessage =
+      jest.fn() as typeof mockedVscode.window.showErrorMessage;
+  });
+
+  it("should execute a shell command with silent output (default)", async () => {
+    const binding: ShellBinding = {
+      key: "g",
+      name: "Git Status",
+      type: "shell",
+      command: "git",
+      args: ["status"],
+      output: "silent",
+    };
+
+    await executeBinding(binding);
+
+    expect(mockSpawn).toHaveBeenCalledWith("git", ["status"], {
+      cwd: "/workspace",
+      detached: true,
+      stdio: "ignore",
+      shell: true,
+    });
+    expect(mockUnref).toHaveBeenCalled();
+  });
+
+  it("should execute a shell command with explicit silent output", async () => {
+    const binding: ShellBinding = {
+      key: "l",
+      name: "List",
+      type: "shell",
+      command: "ls",
+      output: "silent",
+    };
+
+    await executeBinding(binding);
+
+    expect(mockSpawn).toHaveBeenCalledWith("ls", [], {
+      cwd: "/workspace",
+      detached: true,
+      stdio: "ignore",
+      shell: true,
+    });
+    expect(mockUnref).toHaveBeenCalled();
+  });
+
+  it("should use custom cwd when provided", async () => {
+    const binding: ShellBinding = {
+      key: "b",
+      name: "Build",
+      type: "shell",
+      command: "npm",
+      args: ["run", "build"],
+      cwd: "/custom/path",
+      output: "silent",
+    };
+
+    await executeBinding(binding);
+
+    expect(mockSpawn).toHaveBeenCalledWith("npm", ["run", "build"], {
+      cwd: "/custom/path",
+      detached: true,
+      stdio: "ignore",
+      shell: true,
+    });
+  });
+
+  it("should execute shell command in terminal when output is 'terminal'", async () => {
+    const binding: ShellBinding = {
+      key: "t",
+      name: "Test",
+      type: "shell",
+      command: "npm",
+      args: ["test"],
+      output: "terminal",
+    };
+
+    await executeBinding(binding);
+
+    expect(mockCreateTerminal).toHaveBeenCalledWith("WhatKey Shell");
+    expect(mockTerminalSendText).toHaveBeenCalledWith(
+      "cd '/workspace' && npm test",
+    );
+    expect(mockTerminalShow).toHaveBeenCalledWith(true);
+    expect(mockSpawn).not.toHaveBeenCalled();
+  });
+
+  it("should execute shell command with channel output", async () => {
+    const binding: ShellBinding = {
+      key: "c",
+      name: "Check",
+      type: "shell",
+      command: "pnpm",
+      args: ["check"],
+      output: "channel",
+    };
+
+    // Setup mock to simulate successful command
+    mockOn.mockImplementation((event, callback) => {
+      if (event === "close") {
+        callback(0);
+      }
+    });
+    mockStdoutOn.mockImplementation((event, callback) => {
+      if (event === "data") {
+        callback(Buffer.from("All checks passed\n"));
+      }
+    });
+
+    await executeBinding(binding);
+
+    expect(mockSpawn).toHaveBeenCalledWith("pnpm", ["check"], {
+      cwd: "/workspace",
+      detached: false,
+      stdio: "pipe",
+      shell: true,
+    });
+    expect(mockCreateOutputChannel).toHaveBeenCalledWith("whatkey");
+    expect(mockOutputChannelShow).toHaveBeenCalledWith(true);
+  });
+
+  it("should show notification on successful command with notification output", async () => {
+    const binding: ShellBinding = {
+      key: "n",
+      name: "Notify",
+      type: "shell",
+      command: "echo",
+      args: ["hello"],
+      output: "notification",
+    };
+
+    mockOn.mockImplementation((event, callback) => {
+      if (event === "close") {
+        callback(0);
+      }
+    });
+    mockStdoutOn.mockImplementation((event, callback) => {
+      if (event === "data") {
+        callback(Buffer.from("hello\n"));
+      }
+    });
+
+    await executeBinding(binding);
+
+    expect(mockSpawn).toHaveBeenCalledWith("echo", ["hello"], {
+      cwd: "/workspace",
+      detached: false,
+      stdio: "pipe",
+      shell: true,
+    });
+    expect(mockedVscode.window.showInformationMessage).toHaveBeenCalledWith(
+      "WhatKey => Notify: hello",
+    );
+  });
+
+  it("should show error notification on failed command with notification output", async () => {
+    const binding: ShellBinding = {
+      key: "f",
+      name: "Fail",
+      type: "shell",
+      command: "false",
+      output: "notification",
+    };
+
+    mockOn.mockImplementation((event, callback) => {
+      if (event === "close") {
+        callback(1);
+      }
+    });
+    mockStderrOn.mockImplementation((event, callback) => {
+      if (event === "data") {
+        callback(Buffer.from("Command failed\n"));
+      }
+    });
+
+    await executeBinding(binding);
+
+    expect(mockedVscode.window.showErrorMessage).toHaveBeenCalledWith(
+      "WhatKey => Fail: Command failed",
+    );
+  });
+
+  it("should handle spawn error", async () => {
+    const binding: ShellBinding = {
+      key: "e",
+      name: "Error",
+      type: "shell",
+      command: "nonexistent-command",
+      output: "silent",
+    };
+
+    mockOn.mockImplementation((event, callback) => {
+      if (event === "error") {
+        callback(new Error("spawn ENOENT"));
+      }
+    });
+
+    await executeBinding(binding);
+
+    expect(mockedVscode.window.showErrorMessage).toHaveBeenCalledWith(
+      "WhatKey => Failed to execute command: Failed to start shell command: spawn ENOENT",
     );
   });
 });

@@ -11,6 +11,8 @@ let mockExecuteBindingFn = jest.fn(
   (_binding: BindingItem): Promise<void> => Promise.resolve(),
 );
 
+const mockSetStatusBarMessage = jest.fn();
+
 jest.mock("../utils", () => ({
   executeBinding: (binding: BindingItem): Promise<void> =>
     mockExecuteBindingFn(binding),
@@ -27,6 +29,9 @@ jest.mock("../utils", () => ({
       : binding.name,
   getLabel: (binding: BindingItem) => `$(play)  ${binding.key}`,
   sortBindings: <T>(bindings: T[]): T[] => [...bindings],
+  setStatusBarMessage: (...args: unknown[]): void => {
+    mockSetStatusBarMessage(...args);
+  },
 }));
 
 // Reset the mock before each test
@@ -296,7 +301,7 @@ describe("CommandMenu", () => {
       menu.show();
       mockQuickPick.triggerChangeValue("z");
 
-      expect(mockedVscode.window.setStatusBarMessage).toHaveBeenCalledWith(
+      expect(mockSetStatusBarMessage).toHaveBeenCalledWith(
         expect.stringContaining("No binding for"),
         3500,
       );

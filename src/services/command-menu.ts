@@ -6,6 +6,7 @@ import {
   getCommandDetail,
   getDescription,
   getLabel,
+  setStatusBarMessage,
   sortBindings,
 } from "../utils";
 
@@ -134,7 +135,7 @@ export class CommandMenu {
       const hasPrefix = sortedBindings.some(b => b.key.startsWith(newKey));
       if (!hasPrefix) {
         const msg = `No binding for '${keys}${newKey}'`;
-        vscode.window.setStatusBarMessage(msg, 3500);
+        setStatusBarMessage(msg, 3500);
         this.quickPick?.hide();
       }
     });

@@ -53,6 +53,8 @@ export const getCommandDetail = (
       return binding.command;
     case "commands":
       return `${binding.commands.length.toString()} commands`;
+    case "shell":
+      return `$ ${binding.command} ${binding.args?.join(" ") ?? ""}`.trim();
     case "submenu":
       return `${binding.items.length.toString()} items`;
   }

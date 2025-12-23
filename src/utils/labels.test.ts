@@ -1,4 +1,4 @@
-import type { BindingItem, BindingItemWithPath } from "../config";
+import type { BindingItem, BindingItemWithPath, ShellBinding } from "../config";
 import { getLabel, getIcon, getDescription, getCommandDetail } from "./labels";
 
 describe("getLabel", () => {
@@ -110,6 +110,20 @@ describe("getIcon", () => {
 
     expect(result).toBe("$(play)  ");
   });
+
+  it("should return play icon for shell type", () => {
+    const binding: ShellBinding = {
+      key: "g",
+      name: "Git",
+      type: "shell",
+      command: "git status",
+      output: "silent",
+    };
+
+    const result = getIcon(binding, true);
+
+    expect(result).toBe("$(play)  ");
+  });
 });
 
 describe("getDescription", () => {
@@ -150,6 +164,21 @@ describe("getDescription", () => {
     const result = getDescription(binding);
 
     expect(result).toBe("Format All");
+  });
+
+  it("should return just name for shell", () => {
+    const binding: ShellBinding = {
+      key: "g",
+      name: "Git Status",
+      type: "shell",
+      command: "git status",
+      args: ["--short"],
+      output: "silent",
+    };
+
+    const result = getDescription(binding);
+
+    expect(result).toBe("Git Status");
   });
 });
 
@@ -221,5 +250,19 @@ describe("getCommandDetail", () => {
     const result = getCommandDetail(binding, true);
 
     expect(result).toBe("2 items");
+  });
+
+  it("should return shell command with $ prefix for shell type", () => {
+    const binding: ShellBinding = {
+      key: "g",
+      name: "Git Status",
+      type: "shell",
+      command: "git status",
+      output: "silent",
+    };
+
+    const result = getCommandDetail(binding, true);
+
+    expect(result).toBe("$ git status");
   });
 });

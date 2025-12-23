@@ -30,6 +30,29 @@ export const CommandBindingSchema = BaseBindingSchema.extend({
 });
 
 /**
+ * Shell binding - executes a shell command silently in the background
+ */
+export const ShellBindingSchema = BaseBindingSchema.extend({
+  type: z.literal("shell"),
+  command: z.string().min(1).describe("Shell command or executable to run"),
+  args: z
+    .array(z.string())
+    .optional()
+    .describe("Arguments to pass to the command"),
+  cwd: z
+    .string()
+    .optional()
+    .describe("Working directory for the command. Defaults to workspace root."),
+  output: z
+    .enum(["silent", "channel", "notification", "terminal"])
+    .describe(
+      "How to handle command output: silent (no output), channel (Output panel), notification (message popup), terminal (visible terminal)",
+    )
+    .optional()
+    .default("silent"),
+});
+
+/**
  * Commands binding - executes multiple VS Code commands in sequence
  */
 export const CommandsBindingSchema = BaseBindingSchema.extend({
@@ -58,12 +81,13 @@ export const CommandsBindingSchema = BaseBindingSchema.extend({
  * Union for all binding items using discriminated union for better error messages
  */
 export const BindingItemSchema: z.ZodType<
-  CommandBinding | CommandsBinding | SubmenuBinding
+  CommandBinding | CommandsBinding | ShellBinding | SubmenuBinding
 > = z.lazy(() =>
   z
     .discriminatedUnion("type", [
       CommandBindingSchema,
       CommandsBindingSchema,
+      ShellBindingSchema,
       BaseBindingSchema.extend({
         type: z.literal("submenu"),
         items: z
@@ -94,6 +118,13 @@ export const BindingItemSchema: z.ZodType<
           message:
             "Binding with type 'submenu' requires an 'items' array property",
           path: ["items"],
+        });
+      }
+      if (data.type === "shell" && !("command" in data)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Binding with type 'shell' requires a 'command' property",
+          path: ["command"],
         });
       }
     }),
@@ -149,6 +180,7 @@ export const WhatKeyConfigSchema = z.object({
 export type WhatKeyConfig = z.infer<typeof WhatKeyConfigSchema>;
 export type CommandBinding = z.infer<typeof CommandBindingSchema>;
 export type CommandsBinding = z.infer<typeof CommandsBindingSchema>;
+export type ShellBinding = z.infer<typeof ShellBindingSchema>;
 export type BindingItem = z.infer<typeof BindingItemSchema>;
 export interface SubmenuBinding {
   type: "submenu";

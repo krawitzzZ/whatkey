@@ -2,7 +2,7 @@
   "name": "whatkey",
   "displayName": "WhatKey",
   "description": "A customizable command menu with key sequences and search functionality",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "publisher": "krawitzzZ",
   "license": "MIT",
@@ -65,9 +65,10 @@
                 "enum": [
                   "command",
                   "commands",
+                  "shell",
                   "submenu"
                 ],
-                "description": "Type of binding: command (single), commands (multiple), or submenu (nested menu)"
+                "description": "Type of binding: command (single VS Code command), commands (multiple VS Code commands), shell (execute shell command), or submenu (nested menu)"
               },
               "icon": {
                 "type": "string",
@@ -79,7 +80,7 @@
               },
               "command": {
                 "type": "string",
-                "description": "VS Code command to execute (for type: command)"
+                "description": "VS Code command to execute (for type: command), or shell command/executable to run (for type: shell)"
               },
               "commands": {
                 "type": "array",
@@ -105,11 +106,94 @@
                 "description": "Array of VS Code commands to execute in sequence (for type: commands)"
               },
               "args": {
-                "description": "Arguments to pass to the command (for type: command)"
+                "description": "Arguments to pass to the command (for type: command or shell)"
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Working directory for shell commands (for type: shell). Defaults to workspace root."
+              },
+              "output": {
+                "type": "string",
+                "enum": [
+                  "silent",
+                  "channel",
+                  "notification",
+                  "terminal"
+                ],
+                "default": "silent",
+                "description": "How to handle shell command output (for type: shell): silent (no output), channel (Output panel), notification (message popup), terminal (visible terminal)"
               },
               "items": {
                 "type": "array",
-                "description": "Nested bindings (for type: submenu)"
+                "description": "Nested bindings (for type: submenu)",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2,
+                      "description": "The key (1-2 characters) to trigger this binding"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Display name for this binding"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "command",
+                        "commands",
+                        "shell",
+                        "submenu"
+                      ],
+                      "description": "Type of binding"
+                    },
+                    "icon": {
+                      "type": "string",
+                      "description": "VS Code icon identifier"
+                    },
+                    "detail": {
+                      "type": "string",
+                      "description": "Additional detail shown in the menu"
+                    },
+                    "command": {
+                      "type": "string",
+                      "description": "Command to execute (for type: command or shell)"
+                    },
+                    "commands": {
+                      "type": "array",
+                      "description": "Commands to execute in sequence (for type: commands)"
+                    },
+                    "args": {
+                      "description": "Arguments to pass to the command"
+                    },
+                    "cwd": {
+                      "type": "string",
+                      "description": "Working directory (for type: shell)"
+                    },
+                    "output": {
+                      "type": "string",
+                      "enum": [
+                        "silent",
+                        "channel",
+                        "notification",
+                        "terminal"
+                      ],
+                      "default": "silent",
+                      "description": "Output handling (for type: shell)"
+                    },
+                    "items": {
+                      "type": "array",
+                      "description": "Nested bindings (for type: submenu)"
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "name",
+                    "type"
+                  ]
+                }
               }
             },
             "required": [
