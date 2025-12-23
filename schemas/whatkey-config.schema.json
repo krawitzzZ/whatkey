@@ -189,6 +189,69 @@
             },
             "type": {
               "type": "string",
+              "const": "shell"
+            },
+            "command": {
+              "description": "Shell command or executable to run",
+              "type": "string",
+              "minLength": 1
+            },
+            "args": {
+              "description": "Arguments to pass to the command",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "cwd": {
+              "description": "Working directory for the command. Defaults to workspace root.",
+              "type": "string"
+            },
+            "output": {
+              "default": "silent",
+              "description": "How to handle command output: silent (no output), channel (Output panel), notification (message popup), terminal (visible terminal)",
+              "type": "string",
+              "enum": [
+                "silent",
+                "channel",
+                "notification",
+                "terminal"
+              ]
+            }
+          },
+          "required": [
+            "key",
+            "name",
+            "type",
+            "command",
+            "output"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "key": {
+              "description": "The key to trigger this binding",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2
+            },
+            "name": {
+              "description": "Display name for this binding",
+              "type": "string",
+              "minLength": 1
+            },
+            "detail": {
+              "description": "Additional detail information for this binding that will be shown in the menu if enabled. By default, \"command\" bindings show the command ID, \"commands\" bindings show the number of commands and the \"submenu\" type the number of nested bindings.",
+              "type": "string"
+            },
+            "icon": {
+              "description": "VS Code icon identifier (e.g., \"file\", \"code\"). See https://code.visualstudio.com/api/references/icons-in-labels",
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
               "const": "submenu"
             },
             "items": {
