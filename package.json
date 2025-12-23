@@ -267,7 +267,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "check": "pnpm typecheck && pnpm format:check && pnpm lint && pnpm build && pnpm package",
-    "vscode:prepublish": "pnpm run build",
+    "vscode:prepublish": "pnpm run build && pnpm run test:coverage",
     "package": "vsce package --no-dependencies",
     "publish": "vsce publish --no-dependencies",
     "generate:schema": "tsx scripts/generate-schema.ts"

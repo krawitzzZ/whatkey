@@ -46,6 +46,7 @@ jest.mock("vscode", () => ({
       return {
         sendText: mockTerminalSendText,
         show: mockTerminalShow,
+        state: { shell: "bash" },
       };
     },
     createOutputChannel: (...args: unknown[]) => {
