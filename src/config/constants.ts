@@ -71,6 +71,13 @@ export const DEFAULT_BINDINGS: BindingItem[] = [
           "workbench.action.files.save",
         ],
       },
+      {
+        key: "i",
+        name: "Organize imports",
+        icon: "symbol-namespace",
+        type: "command",
+        command: "editor.action.organizeImports",
+      },
     ],
   },
   {
